@@ -196,7 +196,7 @@ def plot_model_comparison(
     for i, metric in enumerate(metrics):
         vals = results_df[metric].tolist()
         offset = (i - n_metrics / 2 + 0.5) * width
-        bars = ax.bar(x + offset, vals, width, label=metric, color=cmap(i / n_metrics), edgecolor="white")
+        ax.bar(x + offset, vals, width, label=metric, color=cmap(i / n_metrics), edgecolor="white")
 
     ax.set_xticks(x)
     ax.set_xticklabels(models, rotation=15, ha="right", fontsize=10)
