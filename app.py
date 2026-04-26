@@ -48,8 +48,8 @@ st.markdown(
     }
     .metric-card h3 {margin:0; font-size:2rem; color:#1a1a2e;}
     .metric-card p  {margin:0; color:#666; font-size:0.9rem;}
-    .benign    {color:#27ae60; font-weight:700; font-size:1.4rem;}
-    .malignant {color:#e74c3c; font-weight:700; font-size:1.4rem;}
+    .benign    {color:#0072B2; font-weight:700; font-size:1.4rem;}
+    .malignant {color:#E69F00; font-weight:700; font-size:1.4rem;}
     </style>
     """,
     unsafe_allow_html=True,
@@ -143,8 +143,8 @@ if page == "🏠 Overview":
     for col, label, value, color in [
         (c1, "Total Samples",    n_samples,   "#3498db"),
         (c2, "Features",         n_features,  "#9b59b6"),
-        (c3, "Benign (0)",       n_benign,    "#27ae60"),
-        (c4, "Malignant (1)",    n_malignant, "#e74c3c"),
+        (c3, "Benign (0)",       n_benign,    "#0072B2"),
+        (c4, "Malignant (1)",    n_malignant, "#E69F00"),
     ]:
         col.markdown(
             f'<div class="metric-card"><h3 style="color:{color};">{value}</h3>'
@@ -160,7 +160,7 @@ if page == "🏠 Overview":
         fig = px.pie(
             names=["Benign (0)", "Malignant (1)"],
             values=[n_benign, n_malignant],
-            color_discrete_sequence=["#27ae60", "#e74c3c"],
+            color_discrete_sequence=["#0072B2", "#E69F00"],
             hole=0.4,
         )
         fig.update_traces(textposition="inside", textinfo="percent+label")
@@ -177,7 +177,7 @@ if page == "🏠 Overview":
                 x=[best_row[m] for m in metrics],
                 y=metrics,
                 orientation="h",
-                marker_color=["#3498db", "#9b59b6", "#e67e22", "#27ae60", "#e74c3c"],
+                marker_color=["#3498db", "#9b59b6", "#e67e22", "#0072B2", "#E69F00"],
                 text=[f"{best_row[m]:.3f}" for m in metrics],
                 textposition="outside",
             ))
@@ -227,17 +227,17 @@ elif page == "📊 EDA":
 
         fig = go.Figure()
         fig.add_trace(go.Histogram(x=benign_vals,    name="Benign (0)",    opacity=0.7,
-                                    marker_color="#27ae60", nbinsx=30))
+                                    marker_color="#0072B2", nbinsx=30))
         fig.add_trace(go.Histogram(x=malignant_vals, name="Malignant (1)", opacity=0.7,
-                                    marker_color="#e74c3c", nbinsx=30))
+                                    marker_color="#E69F00", nbinsx=30))
         fig.update_layout(barmode="overlay", title=f"Distribution of {selected}",
                           xaxis_title=selected, yaxis_title="Count")
         st.plotly_chart(fig, use_container_width=True)
 
         # Box plot
         fig2 = go.Figure()
-        fig2.add_trace(go.Box(y=benign_vals,    name="Benign (0)",    marker_color="#27ae60"))
-        fig2.add_trace(go.Box(y=malignant_vals, name="Malignant (1)", marker_color="#e74c3c"))
+        fig2.add_trace(go.Box(y=benign_vals,    name="Benign (0)",    marker_color="#0072B2"))
+        fig2.add_trace(go.Box(y=malignant_vals, name="Malignant (1)", marker_color="#E69F00"))
         fig2.update_layout(title=f"Box Plot — {selected}", yaxis_title=selected)
         st.plotly_chart(fig2, use_container_width=True)
 
@@ -433,7 +433,7 @@ elif page == "🔮 Predict":
                 title={"text": "Malignant Probability", "font": {"size": 16}},
                 gauge={
                     "axis": {"range": [0, 100], "tickwidth": 1},
-                    "bar": {"color": "#e74c3c" if malignant_prob > 0.5 else "#27ae60"},
+                    "bar": {"color": "#E69F00" if malignant_prob > 0.5 else "#0072B2"},
                     "steps": [
                         {"range": [0,  50], "color": "#d4edda"},
                         {"range": [50, 100], "color": "#f8d7da"},

@@ -16,8 +16,8 @@ from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix, roc_curve,
 
 logger = logging.getLogger(__name__)
 
-# ── Consistent colour palette ──────────────────────────────────────────────────
-PALETTE = {"Benign": "#2ecc71", "Malignant": "#e74c3c"}
+# ── Consistent colour palette (colorblind-safe: blue/orange) ──────────────────
+PALETTE = {"Benign": "#0072B2", "Malignant": "#E69F00"}
 BACKGROUND = "#f8f9fa"
 
 
