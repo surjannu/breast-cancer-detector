@@ -20,6 +20,8 @@
 - [Pipeline Architecture](#pipeline-architecture)
 - [Repository Structure](#repository-structure)
 - [Local Setup and Running](#local-setup-and-running)
+  - [Option A — uv (recommended)](#option-a--uv-recommended)
+  - [Option B — pip + venv](#option-b--pip--venv)
 - [Dashboard](#dashboard)
 - [Technology Stack](#technology-stack)
 - [Conclusion and Future Directions](#conclusion-and-future-directions)
@@ -160,7 +162,8 @@ breast-cancer-detector/
 │
 ├── app.py                  # Streamlit dashboard (4 pages)
 ├── run_pipeline.py         # One-command pipeline runner
-├── requirements.txt        # Python dependencies
+├── pyproject.toml          # Project metadata, dependencies, and tool config
+├── requirements.txt        # Legacy pip dependency list
 │
 ├── data/
 │   ├── raw/                # Downloaded raw CSV
@@ -200,8 +203,8 @@ breast-cancer-detector/
 
 ### Prerequisites
 
-- Python 3.10 or higher
-- pip
+- Python 3.9 or higher
+- Git
 
 ### 1 — Clone the repository
 
@@ -210,33 +213,87 @@ git clone https://github.com/surjannu/breast-cancer-detector.git
 cd breast-cancer-detector
 ```
 
-### 2 — Install dependencies
+---
+
+### Option A — uv (recommended)
+
+[uv](https://docs.astral.sh/uv/) is a fast Python package manager that handles virtual environments and dependency resolution in one step.
+
+#### Install uv
 
 ```bash
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+#### Create a virtual environment and install dependencies
+
+```bash
+uv venv                              # creates .venv using the system Python
+source .venv/bin/activate            # macOS / Linux
+# or on Windows Git Bash:
+source .venv/Scripts/activate
+# or on Windows PowerShell:
+.venv\Scripts\Activate.ps1
+```
+
+Install all runtime dependencies (including optional extras):
+
+```bash
+uv pip install -e ".[explainability,imbalanced]"
+```
+
+Install with dev tools (linting, testing) as well:
+
+```bash
+uv pip install -e ".[all]"
+```
+
+---
+
+### Option B — pip + venv
+
+```bash
+python -m venv .venv
+
+# activate
+source .venv/bin/activate            # macOS / Linux
+source .venv/Scripts/activate        # Windows Git Bash
+.venv\Scripts\Activate.ps1           # Windows PowerShell
+
 pip install -r requirements.txt
 ```
 
-### 3 — Run the full pipeline
+---
+
+### 2 — Run the full pipeline
+
+> Run this once to download data, train models, and generate all reports.
 
 ```bash
 python run_pipeline.py
 ```
 
-This single command will:
-1. Download the UCI Breast Cancer Wisconsin dataset (via `ucimlrepo`; falls back to `sklearn` if unavailable)
-2. Clean and preprocess the data
-3. Generate EDA visualisations
-4. Train all five classifiers
-5. Evaluate and select the best model
-6. Save all outputs to `models/`, `data/processed/`, and `reports/figures/`
+This single command:
+1. Downloads the UCI Breast Cancer Wisconsin dataset (via `ucimlrepo`; falls back to `sklearn`)
+2. Cleans and preprocesses the data → `data/processed/`
+3. Generates EDA visualisations → `reports/figures/`
+4. Trains all five classifiers → `models/`
+5. Evaluates and selects the best model → `models/best_model.pkl`
+6. Generates performance plots → `reports/figures/`
 
-### 4 — Launch the interactive dashboard
+### 3 — Launch the interactive dashboard
 
 ```bash
 streamlit run app.py
 ```
 
 Then open `http://localhost:8501` in your browser.
+
+> **Note:** `python app.py` will not work — Streamlit scripts must be launched via the `streamlit run` command.
 
 ---
 
@@ -257,13 +314,14 @@ The Streamlit dashboard has **four pages**, accessible from the sidebar:
 
 | Category | Tools |
 |---|---|
-| Language | Python 3.10+ |
+| Language | Python 3.9+ |
 | Data manipulation | pandas, NumPy |
 | Machine Learning | scikit-learn, XGBoost |
 | Visualisation | Matplotlib, Seaborn, Plotly |
 | Dashboard | Streamlit |
 | Model persistence | joblib |
 | Data source | ucimlrepo, scikit-learn built-in datasets |
+| Packaging | pyproject.toml (PEP 517/518), uv |
 
 ---
 
