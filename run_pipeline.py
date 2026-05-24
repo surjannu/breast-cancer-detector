@@ -75,7 +75,7 @@ def main() -> None:
     print("[pipeline] correlation_heatmap.png saved.")
 
     # ── 4. Train models ────────────────────────────────────────────────────────
-    print("\n── STEP 4: Model Training ─────────────────────────────────────")
+    print("\n── STEP 4: Model Training (SMOTE + GridSearchCV) ──────────────")
     from src.models.train import train_all_models
     trained_models = train_all_models(X_train, y_train)
 

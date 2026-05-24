@@ -99,14 +99,17 @@ def plot_feature_importance(
     top_n: int = 15,
 ) -> plt.Figure:
     """Horizontal bar chart of top-N feature importances."""
-    if hasattr(model, "feature_importances_"):
-        importances = model.feature_importances_
-        title = f"Feature Importances — {type(model).__name__}"
-    elif hasattr(model, "coef_"):
-        importances = np.abs(model.coef_[0])
-        title = f"Feature Coefficients (|coef|) — {type(model).__name__}"
+    # Unwrap GridSearchCV to access the underlying fitted estimator
+    estimator = model.best_estimator_ if hasattr(model, "best_estimator_") else model
+
+    if hasattr(estimator, "feature_importances_"):
+        importances = estimator.feature_importances_
+        title = f"Feature Importances — {type(estimator).__name__}"
+    elif hasattr(estimator, "coef_"):
+        importances = np.abs(estimator.coef_[0])
+        title = f"Feature Coefficients (|coef|) — {type(estimator).__name__}"
     else:
-        logger.warning("Model %s has no feature_importances_ or coef_.", type(model).__name__)
+        logger.warning("Model %s has no feature_importances_ or coef_.", type(estimator).__name__)
         fig, ax = plt.subplots(figsize=(8, 4))
         ax.text(0.5, 0.5, "Feature importance not available for this model.",
                 ha="center", va="center", transform=ax.transAxes)
