@@ -7,3 +7,7 @@ __pycache__/
 dist/
 build/
 .ipynb_checkpoints/
+
+# Generated pipeline artifacts
+models/*.pkl
+reports/figures/*.png
