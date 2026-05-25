@@ -10,4 +10,6 @@ build/
 
 # Generated pipeline artifacts
 models/*.pkl
+models/best_model_name.txt
 reports/figures/*.png
+reports/model_comparison.csv
