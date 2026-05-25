@@ -1,9 +1,19 @@
 """Build breast_cancer_presentation.pptx — 10 slides, correct narrative arc."""
-import os
-from pptx import Presentation
-from pptx.util import Inches, Pt
-from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN
+import sys
+from pathlib import Path
+
+try:
+    from pptx import Presentation
+    from pptx.dml.color import RGBColor
+    from pptx.enum.shapes import MSO_AUTO_SHAPE_TYPE
+    from pptx.enum.text import PP_ALIGN
+    from pptx.util import Inches, Pt
+except ImportError:
+    sys.exit(
+        "python-pptx is required to run this script.\n"
+        "Install it with:  pip install python-pptx\n"
+        "Or:               pip install 'breast-cancer-detector[presentation]'"
+    )
 
 # ── Palette ───────────────────────────────────────────────────────────
 NAVY    = RGBColor(0x0A, 0x23, 0x42)
@@ -24,9 +34,9 @@ WARN_BG = RGBColor(0xFF, 0xF8, 0xE1)
 WARN_TX = RGBColor(0x7B, 0x5A, 0x00)
 STAGE_B = RGBColor(0x12, 0x2D, 0x52)
 
-PROJECT = r"C:\Users\sures\DSI\personal_projects\breast-cancer-detector"
-FIGURES = os.path.join(PROJECT, "reports", "figures")
-OUTPUT  = os.path.join(PROJECT, "breast_cancer_presentation.pptx")
+PROJECT = Path(__file__).resolve().parent
+FIGURES = str(PROJECT / "reports" / "figures")
+OUTPUT  = str(PROJECT / "breast_cancer_presentation.pptx")
 
 prs = Presentation()
 prs.slide_width  = Inches(10)
@@ -41,7 +51,7 @@ def set_bg(slide, rgb):
     f.fore_color.rgb = rgb
 
 def add_rect(slide, x, y, w, h, fill_rgb, border_rgb=None):
-    s = slide.shapes.add_shape(1, Inches(x), Inches(y), Inches(w), Inches(h))
+    s = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.RECTANGLE, Inches(x), Inches(y), Inches(w), Inches(h))
     s.fill.solid()
     s.fill.fore_color.rgb = fill_rgb
     if border_rgb:
@@ -52,7 +62,7 @@ def add_rect(slide, x, y, w, h, fill_rgb, border_rgb=None):
     return s
 
 def add_oval(slide, x, y, w, h, fill_rgb):
-    s = slide.shapes.add_shape(9, Inches(x), Inches(y), Inches(w), Inches(h))
+    s = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.OVAL, Inches(x), Inches(y), Inches(w), Inches(h))
     s.fill.solid()
     s.fill.fore_color.rgb = fill_rgb
     s.line.fill.background()
@@ -76,9 +86,9 @@ def add_txt(slide, text, x, y, w, h, size, color,
     return tb
 
 def add_img(slide, fname, x, y, w, h):
-    path = os.path.join(FIGURES, fname)
-    if os.path.exists(path):
-        slide.shapes.add_picture(path, Inches(x), Inches(y), Inches(w), Inches(h))
+    path = Path(FIGURES) / fname
+    if path.exists():
+        slide.shapes.add_picture(str(path), Inches(x), Inches(y), Inches(w), Inches(h))
     else:
         print(f"  [WARN] {path} not found")
 

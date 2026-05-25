@@ -6,6 +6,7 @@ from pathlib import Path
 import joblib
 import numpy as np
 from imblearn.over_sampling import SMOTE
+from imblearn.pipeline import Pipeline as ImbPipeline
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
@@ -28,7 +29,7 @@ def build_models() -> dict:
         ),
         "Random Forest": RandomForestClassifier(
             random_state=42,
-            n_jobs=-1,
+            n_jobs=1,  # single-threaded; GridSearchCV(n_jobs=-1) parallelises the search
         ),
         "SVM": SVC(
             kernel="rbf",
@@ -41,36 +42,40 @@ def build_models() -> dict:
             verbosity=0,
         ),
         "KNN": KNeighborsClassifier(
-            n_jobs=-1,
+            n_jobs=1,  # single-threaded; GridSearchCV(n_jobs=-1) parallelises the search
         ),
     }
 
 
 def build_param_grids() -> dict:
-    """Return hyperparameter search grids for GridSearchCV."""
+    """Return hyperparameter search grids for GridSearchCV.
+
+    Keys are prefixed with 'clf__' to target the classifier step inside the
+    imblearn Pipeline (smote → clf).
+    """
     return {
         "Logistic Regression": {
-            "C": [0.01, 0.1, 1, 10, 100],
-            "solver": ["lbfgs", "liblinear"],
+            "clf__C": [0.01, 0.1, 1, 10, 100],
+            "clf__solver": ["lbfgs", "liblinear"],
         },
         "Random Forest": {
-            "n_estimators": [100, 200, 300],
-            "max_depth": [None, 5, 10, 20],
-            "min_samples_split": [2, 5, 10],
+            "clf__n_estimators": [100, 200, 300],
+            "clf__max_depth": [None, 5, 10, 20],
+            "clf__min_samples_split": [2, 5, 10],
         },
         "SVM": {
-            "C": [0.1, 1, 10, 100],
-            "gamma": ["scale", "auto"],
+            "clf__C": [0.1, 1, 10, 100],
+            "clf__gamma": ["scale", "auto"],
         },
         "XGBoost": {
-            "n_estimators": [100, 200],
-            "max_depth": [3, 5, 7],
-            "learning_rate": [0.01, 0.1, 0.2],
+            "clf__n_estimators": [100, 200],
+            "clf__max_depth": [3, 5, 7],
+            "clf__learning_rate": [0.01, 0.1, 0.2],
         },
         "KNN": {
-            "n_neighbors": [3, 5, 7, 9, 11],
-            "weights": ["uniform", "distance"],
-            "metric": ["euclidean", "manhattan"],
+            "clf__n_neighbors": [3, 5, 7, 9, 11],
+            "clf__weights": ["uniform", "distance"],
+            "clf__metric": ["euclidean", "manhattan"],
         },
     }
 
@@ -80,7 +85,11 @@ def train_all_models(
     y_train: np.ndarray,
     models_dir: Path | None = None,
 ) -> dict:
-    """Apply SMOTE, tune hyperparameters via GridSearchCV, and persist models.
+    """Tune hyperparameters via GridSearchCV with SMOTE inside each CV fold.
+
+    SMOTE is placed inside an imblearn Pipeline so resampling happens
+    independently within each fold's training split — synthetic samples never
+    leak into the validation fold, avoiding inflated CV scores.
 
     Args:
         X_train: Training features (already scaled).
@@ -94,18 +103,6 @@ def train_all_models(
         models_dir = MODELS_DIR
     models_dir.mkdir(parents=True, exist_ok=True)
 
-    # ── Apply SMOTE to address class imbalance ─────────────────────────────────
-    print("[train] Applying SMOTE to balance training classes …")
-    smote = SMOTE(random_state=42)
-    X_resampled, y_resampled = smote.fit_resample(X_train, y_train)
-    unique, counts = np.unique(y_resampled, return_counts=True)
-    class_counts = dict(zip(unique.tolist(), counts.tolist()))
-    logger.info(
-        "SMOTE: %d → %d samples  class counts: %s",
-        len(y_train), len(y_resampled), class_counts,
-    )
-    print(f"[train]   → Original: {len(y_train)} samples  |  After SMOTE: {len(y_resampled)} samples  |  Classes: {class_counts}")
-
     models = build_models()
     param_grids = build_param_grids()
     trained: dict = {}
@@ -114,22 +111,33 @@ def train_all_models(
         print(f"[train] Tuning & training {name} …")
         logger.info("GridSearchCV tuning %s", name)
         try:
+            # SMOTE runs only on each fold's training split inside GridSearchCV.
+            pipeline = ImbPipeline([
+                ("smote", SMOTE(random_state=42)),
+                ("clf", clf),
+            ])
+
             grid_search = GridSearchCV(
-                estimator=clf,
+                estimator=pipeline,
                 param_grid=param_grids[name],
                 scoring="f1",
                 cv=5,
-                n_jobs=-1,
+                n_jobs=-1,  # parallelise fold/param combos; estimators use n_jobs=1
                 refit=True,
             )
-            grid_search.fit(X_resampled, y_resampled)
+            grid_search.fit(X_train, y_train)
             trained[name] = grid_search
 
-            print(f"[train]   → Best params : {grid_search.best_params_}")
+            # Strip clf__ prefix for readable display
+            display_params = {
+                k.replace("clf__", ""): v
+                for k, v in grid_search.best_params_.items()
+            }
+            print(f"[train]   → Best params : {display_params}")
             print(f"[train]   → Best CV F1  : {grid_search.best_score_:.4f}")
             logger.info(
                 "Best params for %s: %s  (CV F1=%.4f)",
-                name, grid_search.best_params_, grid_search.best_score_,
+                name, display_params, grid_search.best_score_,
             )
 
             safe_name = name.lower().replace(" ", "_")

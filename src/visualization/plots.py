@@ -99,8 +99,10 @@ def plot_feature_importance(
     top_n: int = 15,
 ) -> plt.Figure:
     """Horizontal bar chart of top-N feature importances."""
-    # Unwrap GridSearchCV to access the underlying fitted estimator
+    # Unwrap GridSearchCV → imblearn/sklearn Pipeline → final classifier
     estimator = model.best_estimator_ if hasattr(model, "best_estimator_") else model
+    if hasattr(estimator, "steps"):
+        estimator = estimator.steps[-1][1]
 
     if hasattr(estimator, "feature_importances_"):
         importances = estimator.feature_importances_
