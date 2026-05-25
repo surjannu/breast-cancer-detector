@@ -33,14 +33,15 @@ dependencies = [
     "streamlit>=1.20.0",
     "joblib>=1.2.0",
     "ucimlrepo>=0.0.3",
+    "imbalanced-learn>=0.10.0",
 ]
 
 [project.optional-dependencies]
 explainability = [
     "shap>=0.41.0",
 ]
-imbalanced = [
-    "imbalanced-learn>=0.10.0",
+presentation = [
+    "python-pptx>=0.6.21",
 ]
 dev = [
     "pytest>=7.0",
@@ -50,7 +51,7 @@ dev = [
     "mypy>=1.0",
 ]
 all = [
-    "breast-cancer-detector[explainability,imbalanced,dev]",
+    "breast-cancer-detector[explainability,presentation,dev]",
 ]
 
 [project.scripts]
